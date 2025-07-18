@@ -33,7 +33,7 @@ SETUP form !!mniStatusControl
  $* This frame contains adding buttons
   FRAME    .f0       ||
    OPTION  .filtOpt  ||         WIDTH 5
-   BUTTON  .addElem  'Add'      WIDTH 7  HEIGHT 2
+   BUTTON  .addElem  'Add'      WIDTH 7  HEIGHT 1
    BUTTON  .remsel   'Rem sel'  WIDTH 7  HEIGHT 1
    BUTTON  .remAll   'Rem all'  WIDTH 7  HEIGHT 1
   EXIT
@@ -101,7 +101,7 @@ DEFINE METHOD .mniStatusControl()
  $* Initialising options for (axeOri)
    !filtOptArr[1]      = 'PIPE'
    !filtOptArr[2]      = 'STRU'
-   !filtOptArr[3]      = 'SUPP'
+   !filtOptArr[3]      = 'SUPPO'
    !filtOptArr[4]      = 'EQUI'
    !filtOptArr[5]      = 'STRU'
    !filtOptArr[6]      = 'VALVE'
@@ -275,20 +275,34 @@ ENDMETHOD
 -------------------------------------------------------------------------------------
 DEFINE METHOD .mniAddElem()
 
- PROMPT OFF
- PROMPT LOAD ESCAPE 'Select an element from zone or CE inside the ZONE'
+ $* Asking user to select an element
+  PROMPT OFF
+  PROMPT LOAD ESCAPE 'Select an element from zone or CE inside the ZONE' 
+  ID@
+  Handle(61,528)
+  ENDHANDLE
+ 
+ $* Moving to the site -> adding "filtered" element
+  SITE
 
- ID@
- Handle(61,528)
- ENDHANDLE
+  $* Generating some arrays
+   !rows = ARRAY()
+   !elements = ARRAY()
 
- Zone
- !zonePurp = !!CE.PURP
+  $* Reading the filter Value
+   !filterType = !THIS.filtOpt.DTEXT[!THIS.filtOpt.VAL]
+  
+  $* Collecting all the filtered elements
+   !elemCol = object collection()
+   !elemCol.addtype(!filterType)
+   !elemCol.scope(SITE)
+   !elements.APPENDARRAY(!elemCol.results())
+   q var !elements
+ 
 
- $* Defining some common variables
- !rows = ARRAY()
- !elements = ARRAY()
 
+ 
+$(
  $* Extracting elements from the zone -> using: "purp"
  IF (!zonePurp EQ 'STRU') THEN 
   !elemCol = object collection()
@@ -349,7 +363,7 @@ DEFINE METHOD .mniAddElem()
  ENDIF
 
  !this.addedElements.setrows(!rows)
- ZONE
+ $)
 ENDMETHOD
 
 -------------------------------------------------------------------------------------

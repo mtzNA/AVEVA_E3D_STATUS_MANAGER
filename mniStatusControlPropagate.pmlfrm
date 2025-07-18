@@ -25,7 +25,7 @@ EXIT
 -- Return: 0
 -------------------------------------------------------------------------------------
 DEFINE METHOD .mniStatusControlPropagate()
-
+ $* Initialising the form itself
  !THIS.FORMTITLE      = 'Status control tool (Propagation)'
  !THIS.apply.CALLBACK = '!THIS.mniApply()'
 
@@ -41,8 +41,8 @@ DEFINE METHOD .mniStatusControlPropagate()
  $* Filling the "propagationHead" based on the selection from "mniStatusControl"
  !this.propagationHead.setrows(!THIS.mniCheckStatus(!!SelectedElementType, !!SelectedElementName))
 
+ $* Filling the "propagationCandidates" based on the all epyname (same type elements)
  !rows = ARRAY()
-
  DO !condidate VALUES !!propagationCandidateCol
   $!condidate
   !rows.APPENDARRAY(!THIS.mniCheckStatus(!!CE.TYPE, !!CE.name))

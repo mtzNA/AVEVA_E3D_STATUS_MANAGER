@@ -297,73 +297,24 @@ DEFINE METHOD .mniAddElem()
    !elemCol.addtype(!filterType)
    !elemCol.scope(SITE)
    !elements.APPENDARRAY(!elemCol.results())
-   q var !elements
- 
 
+   $* Reading elements data and status -> asigning to the table
+    !!listOfElements = !elements
+    DO !element VALUES !elements
+     $!element
+     !rows.APPENDARRAY(!THIS.mniCheckStatus(!!CE.TYPE, !!CE.name))
+    ENDDO 
+    !this.addedElements.setrows(!rows)
 
- 
-$(
- $* Extracting elements from the zone -> using: "purp"
- IF (!zonePurp EQ 'STRU') THEN 
-  !elemCol = object collection()
-  !elemCol.addtype('STRU')
-  !elemCol.scope(ZONE)
-  !elements.APPENDARRAY(!elemCol.results())
- 
-  !zonePurpDefined = TRUE
-
- ELSEIF (!zonePurp EQ 'MECH' OR !zonePurp EQ 'EQUI') THEN
-  !elemCol = object collection()
-  !elemCol.addtype('EQUI')
-  !elemCol.scope(ZONE)
-  !elements.APPENDARRAY(!elemCol.results())
- 
-  !zonePurpDefined = TRUE
- 
- ELSEIF (!zonePurp EQ 'SUPP') THEN
-  !components = ARRAY()
-  !compTypes[1] = 'SUPP'
-  !compTypes[2] = 'FRMW'
- 
-  !elemCol = object collection()
-  !elemCol.APPENDTYPES(!compTypes)
-  !elemCol.scope(ZONE)
-  !elements.APPENDARRAY(!elemCol.results())
- 
-  !zonePurpDefined = TRUE
- 
- ELSEIF (!zonePurp EQ 'PIPE') THEN
-  !components = ARRAY()
-  !compTypes[1] = 'VALVE'
-  !compTypes[2] = 'INST'
-  !compTypes[3] = 'PCOM'
-  !compTypes[4] = 'FILT'
-  !compTypes[5] = 'PIPE'
-
- 
-  !elemCol = object collection()
-  !elemCol.APPENDTYPES(!compTypes)
-  !elemCol.scope(ZONE)
-  !elements.APPENDARRAY(!elemCol.results())
- 
-  !zonePurpDefined = TRUE
- 
- ELSE
-  !!alert.message('Please define purpos of the zone!')
-  !zonePurpDefined = FALSE
- ENDIF
-
- $* Reading elements data
- !!listOfElements = !elements
- IF (!zonePurpDefined) THEN
-  DO !element VALUES !elements
-   $!element
-   !rows.APPENDARRAY(!THIS.mniCheckStatus(!!CE.TYPE, !!CE.name))
-  ENDDO 
- ENDIF
-
- !this.addedElements.setrows(!rows)
- $)
+   $( $* Syntax sample
+    !compTypes[1] = 'VALVE'
+    !compTypes[2] = 'INST'
+    !compTypes[3] = 'PCOM'
+    !compTypes[4] = 'FILT'
+    !compTypes[5] = 'PIPE'
+    !elemCol.APPENDTYPES(!compTypes) 
+   $)
+   SITE
 ENDMETHOD
 
 -------------------------------------------------------------------------------------

@@ -30,23 +30,27 @@ SETUP form !!mniStatusControl
 
  PATH DOWN
 
- FRAME      .f0         ||
-  BUTTON    .addElem           'Add Zone elements'     WIDTH 7  HEIGHT 2
-  BUTTON    .remsel            'Rem selected'          WIDTH 7  HEIGHT 2
-  BUTTON    .remAll            'Rem all'               WIDTH 7  HEIGHT 1
- EXIT
-
- FRAME      .f1      AT YMAX.f0-0.1  ||
-  BUTTON    .singAll     ''             WIDTH 7  HEIGHT 1
-  BUTTON    .assign      'Assign'       WIDTH 7  HEIGHT 1
-  BUTTON    .promote     'Promote'      WIDTH 7  HEIGHT 1
-  BUTTON    .demote      'Demote'       WIDTH 7  HEIGHT 1
-  BUTTON    .reset       'Reset'        WIDTH 7  HEIGHT 1
-  BUTTON    .remove      'Remove'       WIDTH 7  HEIGHT 1
-  BUTTON    .propagate   'Propagate'    WIDTH 7  HEIGHT 1
- EXIT
-
- LIST .addedElements || AT YMIN.f0+0.3 AT XMAX.addElem+1  SINGLE  WIDTH 100 HEIGHT 22
+ $* This frame contains adding buttons
+  FRAME    .f0       ||
+   OPTION  .filtOpt  ||         WIDTH 5
+   BUTTON  .addElem  'Add'      WIDTH 7  HEIGHT 2
+   BUTTON  .remsel   'Rem sel'  WIDTH 7  HEIGHT 1
+   BUTTON  .remAll   'Rem all'  WIDTH 7  HEIGHT 1
+  EXIT
+ 
+ $* This frame contains Status buttons
+  FRAME    .f1 AT YMAX.f0-0.1  ||
+   BUTTON  .singAll    ''           WIDTH 7  HEIGHT 1
+   BUTTON  .assign     'Assign'     WIDTH 7  HEIGHT 1
+   BUTTON  .promote    'Promote'    WIDTH 7  HEIGHT 1
+   BUTTON  .demote     'Demote'     WIDTH 7  HEIGHT 1
+   BUTTON  .reset      'Reset'      WIDTH 7  HEIGHT 1
+   BUTTON  .remove     'Remove'     WIDTH 7  HEIGHT 1
+   BUTTON  .propagate  'Propagate'  WIDTH 7  HEIGHT 1
+  EXIT
+ 
+ $* List of all filteres elements 
+  LIST  .addedElements  ||  AT YMIN.f0+0.3  AT XMAX.filtOpt+1  SINGLE  WIDTH 100  HEIGHT 22
 EXIT
 
 -------------------------------------------------------------------------------------
@@ -57,41 +61,54 @@ EXIT
 -------------------------------------------------------------------------------------
 DEFINE METHOD .mniStatusControl()
  
- !THIS.FORMTITLE = 'Status control tool'
+ $* Initialising form properties
+  !THIS.FORMTITLE = 'Status control tool'
+ 
+ $* Calling functions
+  !THIS.addElem.CALLBACK       = '!THIS.mniAddElem()'
+  !THIS.remsel.CALLBACK        = '!THIS.mniremCE()'
+  !THIS.remAll.CALLBACK        = '!THIS.mniremAll()' 
+  !THIS.singAll.CALLBACK       = '!THIS.mniSingAll()' 
+  !THIS.assign.CALLBACK        = |!THIS.mniMultiFunction('EQ', 'ASSIGN')|
+  !THIS.promote.CALLBACK       = |!THIS.mniMultiFunction('NE', 'PROMOTE')|
+  !THIS.demote.CALLBACK        = |!THIS.mniMultiFunction('NE', 'DEMOTE')|
+  !THIS.reset.CALLBACK         = |!THIS.mniMultiFunction('NE', 'RESET')|
+  !THIS.remove.CALLBACK        = |!THIS.mniMultiFunction('NE', 'REMOVE')|
+  !THIS.propagate.CALLBACK     = |!THIS.mniPropagate()|
+  !THIS.addedElements.CALLBACK = '!THIS.mniAddedElements()' 
 
- !THIS.addElem.CALLBACK        = '!THIS.mniAddElem()'
- !THIS.remsel.CALLBACK         = '!THIS.mniremCE()'
- !THIS.remAll.CALLBACK         = '!THIS.mniremAll()' 
+ $* Initialising Values
+  !THIS.singAll.TAG = 'Single'
+  !!singAllVal = TRUE
 
- !THIS.singAll.CALLBACK        = '!THIS.mniSingAll()' 
+  !THIS.singAll.Background   = 'YELLOW'
+  !THIS.assign.Background    = 'YELLOW'
+  !THIS.promote.Background   = 'YELLOW'
+  !THIS.demote.Background    = 'YELLOW'
+  !THIS.reset.Background     = 'YELLOW'
+  !THIS.remove.Background    = 'YELLOW'
+  !THIS.propagate.Background = 'YELLOW'
 
- !THIS.assign.CALLBACK         = |!THIS.mniMultiFunction('EQ', 'ASSIGN')|
- !THIS.promote.CALLBACK        = |!THIS.mniMultiFunction('NE', 'PROMOTE')|
- !THIS.demote.CALLBACK         = |!THIS.mniMultiFunction('NE', 'DEMOTE')|
- !THIS.reset.CALLBACK          = |!THIS.mniMultiFunction('NE', 'RESET')|
- !THIS.remove.CALLBACK         = |!THIS.mniMultiFunction('NE', 'REMOVE')|
- !THIS.propagate.CALLBACK      = |!THIS.mniPropagate()|
+ $* Initialising the heading of the "List: (addedElements)"
+  !heading[1]     = 'Type'
+  !heading[2]     = 'Name'
+  !heading[3]     = 'S.Value'
+  !heading[4]     = 'S.Description'
+  !heading[5]     = 'S.Number'
+  !heading[6]     = 'User - Date'
+  !this.addedElements.setheadings(!heading)
 
- !THIS.addedElements.CALLBACK  = '!THIS.mniAddedElements()' 
-
- !THIS.singAll.TAG = 'Single'
- !!singAllVal = TRUE
-
- !THIS.singAll.Background   = 'YELLOW'
- !THIS.assign.Background    = 'YELLOW'
- !THIS.promote.Background   = 'YELLOW'
- !THIS.demote.Background    = 'YELLOW'
- !THIS.reset.Background     = 'YELLOW'
- !THIS.remove.Background    = 'YELLOW'
- !THIS.propagate.Background = 'YELLOW'
-
- !heading[1]     = 'Type'
- !heading[2]     = 'Name'
- !heading[3]     = 'S.Value'
- !heading[4]     = 'S.Description'
- !heading[5]     = 'S.Number'
- !heading[6]     = 'User - Date'
- !this.addedElements.setheadings(!heading)
+ $* Initialising options for (axeOri)
+   !filtOptArr[1]      = 'PIPE'
+   !filtOptArr[2]      = 'STRU'
+   !filtOptArr[3]      = 'SUPP'
+   !filtOptArr[4]      = 'EQUI'
+   !filtOptArr[5]      = 'STRU'
+   !filtOptArr[6]      = 'VALVE'
+   !filtOptArr[7]      = 'INST'
+   !filtOptArr[8]      = 'PCOM'
+   !filtOptArr[9]      = 'FILT'
+   !THIS.filtOpt.DTEXT = !filtOptArr
 ENDMETHOD
 
 -------------------------------------------------------------------------------------

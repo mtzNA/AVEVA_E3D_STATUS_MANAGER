@@ -50,7 +50,7 @@ SETUP form !!mniStatusControl
   EXIT
  
  $* List of all filteres elements 
-  LIST  .addedElements  ||  AT YMIN.f0+0.3  AT XMAX.filtOpt+1  SINGLE  WIDTH 100  HEIGHT 22
+  LIST  .addedElements  ||  AT YMIN.f0+0.3  AT XMAX.filtOpt+1  SINGLE  WIDTH 100  HEIGHT 21
 EXIT
 
 -------------------------------------------------------------------------------------
@@ -120,34 +120,34 @@ ENDMETHOD
 -------------------------------------------------------------------------------------
 DEFINE METHOD .mniPropagate()
 
- $* These will be used to fill the first list in other form
- !!SelectedElementName = !THIS.addedElements.selection().SPLIT()[2]
- !!SelectedElementType = !THIS.addedElements.selection().SPLIT()[1]
-
- $* Propagating for the "SINGLE" case
- IF (!THIS.singAll.TAG EQ 'Single') THEN
-
-  $* Getting DBnum of the selected element
-  !nameOrig    = !THIS.addedElements.selection().SPLIT()[2]
-  $!nameOrig
-  !selectedDbnum = !!CE.REFNO
-
-  $* Generating the name that we need to look for
-  !nameAfter   = !THIS.addedElements.selection().SPLIT()[2].AFTER('-')
-  !nameFirPart = !THIS.addedElements.selection().SPLIT()[2].BEFORE('-').SUBSTRING(2, 2)
-  !nameSecPart = !THIS.addedElements.selection().SPLIT()[2].BEFORE('-').SUBSTRING(7, 2)
-  !nameBefor   = !THIS.addedElements.selection().SPLIT()[2].BEFORE('-').REPLACE(!nameFirPart, '*').REPLACE(!nameSecPart, '*')
-  !searchName = !nameBefor + '-' + !nameAfter
- 
-  $* This will be used to fill the second list in other form
-  var !!propagationCandidateCol collect all $!!SelectedElementType with (matchwild (NAME, !searchName)) for WORLD
-  !index = !!propagationCandidateCol.FINDFIRST('$!selectedDbnum')
-  !!propagationCandidateCol.REMOVE(!index)
- ENDIF
-
- $* Running the second form (re-initializing it)
- pml reload form !!mniStatusControlPropagate
- show !!mniStatusControlPropagate
+ $* If the selected elem has MIN STATUS or plus button will work
+  IF (!THIS.addedElements.selection().SPLIT()[3] NE 'unset') THEN
+  
+   $* These will be used to fill the first list in other form
+    !!SelectedElementName = !THIS.addedElements.selection().SPLIT()[2]
+    !!SelectedElementType = !THIS.addedElements.selection().SPLIT()[1]
+   
+   $* Getting DBnum of the selected element
+    !nameOrig    = !THIS.addedElements.selection().SPLIT()[2]
+    $!nameOrig
+    !selectedDbnum = !!CE.REFNO
+   
+   $* Generating the name that we need to look for
+    !nameAfter   = !THIS.addedElements.selection().SPLIT()[2].AFTER('-')
+    !nameFirPart = !THIS.addedElements.selection().SPLIT()[2].BEFORE('-').SUBSTRING(2, 2)
+    !nameSecPart = !THIS.addedElements.selection().SPLIT()[2].BEFORE('-').SUBSTRING(7, 2)
+    !nameBefor   = !THIS.addedElements.selection().SPLIT()[2].BEFORE('-').REPLACE(!nameFirPart, '*').REPLACE(!nameSecPart, '*')
+    !searchName = !nameBefor + '-' + !nameAfter
+   
+   $* This will be used to fill the second list in other form
+    var !!propagationCandidateCol collect all $!!SelectedElementType with (matchwild (NAME, !searchName)) for WORLD
+    !index = !!propagationCandidateCol.FINDFIRST('$!selectedDbnum')
+    !!propagationCandidateCol.REMOVE(!index)
+    
+   $* Running the second form (re-initializing it)
+    pml reload form !!mniStatusControlPropagate
+    show !!mniStatusControlPropagate
+  ENDIF
 ENDMETHOD
 
 -------------------------------------------------------------------------------------
@@ -306,14 +306,15 @@ DEFINE METHOD .mniAddElem()
     ENDDO 
     !this.addedElements.setrows(!rows)
 
-   $( $* Syntax sample
-    !compTypes[1] = 'VALVE'
-    !compTypes[2] = 'INST'
-    !compTypes[3] = 'PCOM'
-    !compTypes[4] = 'FILT'
-    !compTypes[5] = 'PIPE'
-    !elemCol.APPENDTYPES(!compTypes) 
-   $)
+   $* Syntax sample
+    $( 
+     !compTypes[1] = 'VALVE'
+     !compTypes[2] = 'INST'
+     !compTypes[3] = 'PCOM'
+     !compTypes[4] = 'FILT'
+     !compTypes[5] = 'PIPE'
+     !elemCol.APPENDTYPES(!compTypes) 
+    $)
    SITE
 ENDMETHOD
 

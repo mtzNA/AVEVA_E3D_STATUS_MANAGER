@@ -1,0 +1,205 @@
+-------------------------------------------------------------------------------------
+--
+-- 
+-- File:            mniStatusControlPropagate.pmlfrm
+-- Module:          Design
+-- Author:          morteza.naeini@veolia.com - naeini.morteza@gmail.com
+-- Created:         09/07/2025
+-- Description:     Managing status control
+--
+--
+-------------------------------------------------------------------------------------
+layout form !!mniStatusControlPropagate dialog
+PATH DOWN
+FRAME .f1                    ||
+ LIST .propagationHead       |Selected element|   SINGLE  WIDTH 100 HEIGHT 2
+ LIST .propagationCandidates |Selected element epynames| multiple  WIDTH 100 HEIGHT 15
+EXIT
+ BUTTON    .apply      'Click 2 Times!'       WIDTH 10  HEIGHT 1
+EXIT
+
+-------------------------------------------------------------------------------------
+-- METHOD: initialise
+-- Func:   Initialises the "mniStatusControlPropagate" form
+-- Feed:   0
+-- Return: 0
+-------------------------------------------------------------------------------------
+DEFINE METHOD .mniStatusControlPropagate()
+
+!THIS.FORMTITLE      = 'Status control tool (Propagation)'
+!THIS.apply.CALLBACK = '!THIS.mniApply()'
+
+!heading[1] = 'Type'
+!heading[2] = 'Name'
+!heading[3] = 'S.Value'
+!heading[4] = 'S.Description'
+!heading[5] = 'S.Number'
+!heading[6] = 'User - Date'
+!this.propagationHead.setheadings(!heading)
+!this.propagationCandidates.setheadings(!heading)
+
+$* Filling the "propagationHead" based on the selection from "mniStatusControl"
+!this.propagationHead.setrows(!THIS.mniCheckStatus(!!SelectedElementType, !!SelectedElementName))
+
+!rows = ARRAY()
+
+DO !condidate VALUES !!propagationCandidateCol
+ $!condidate
+ !rows.APPENDARRAY(!THIS.mniCheckStatus(!!CE.TYPE, !!CE.name))
+ENDDO 
+!this.propagationCandidates.setrows(!rows)
+
+ENDMETHOD
+
+-------------------------------------------------------------------------------------
+-- METHOD:   mniApply
+-- func:     Transfer SC from the first list to selected elements from the second list
+-- Feed:     Automatically from the "second list"
+-- Return:   0
+-------------------------------------------------------------------------------------
+DEFINE METHOD .mniApply()
+
+$* Gets the status of the selected element from the first list
+!targetStatus = !THIS.propagationHead.SELECTION().SPLIT()[3]
+
+$* Generates list of selection from the second list
+!selectedCandidate   = !THIS.propagationCandidates.selection()  $* (x): Is an array
+
+DO !cand VALUES !selectedCandidate
+
+$* Initialising the Status for each selected candidate
+ !candType = !cand.SPLIT()[1]
+ !candName = !cand.SPLIT()[2]
+ !candSval = !cand.SPLIT()[3]
+ $!candName
+ 
+ IF (!candSval EQ 'unset') THEN
+  !THIS.mniMultiFunctionOnlySingle('EQ', 'ASSIGN', !candType, !candName, !candSval)
+ ELSEIF (!candSval NE 'unset') THEN
+  !THIS.mniMultiFunctionOnlySingle('NE', 'RESET', !candType, !candName, !candSval)
+ ENDIF
+
+$* Promoting selected cands to reach target status
+ Do !i from 1 TO 10
+  !selectedCandStatus = !THIS.mniCheckStatus(!!CE.TYPE, !!CE.name)[1][3]
+  IF (!selectedCandStatus NE !targetStatus) THEN
+   !THIS.mniMultiFunctionOnlySingle('NE', 'PROMOTE', !candType, !candName, !candSval)
+  ENDIF
+ ENDDO
+ENDDO
+
+$* Updating the list
+!rows = ARRAY()
+DO !condidate VALUES !!propagationCandidateCol
+ $!condidate
+ !rows.APPENDARRAY(!THIS.mniCheckStatus(!!CE.TYPE, !!CE.name))
+ENDDO 
+!this.propagationCandidates.setrows(!rows) 
+ 
+
+ENDMETHOD
+
+-------------------------------------------------------------------------------------
+-- METHOD:   mniMultiFunctionOnlySingle
+-- func:     "Assigns" different type of status control on (single/all) elements
+-- Feed:     compare(EQ / NE) - function(ASSIGN / PROMOTE / DEMOTE / RESET / REMOVE)
+-- Return:   0
+-------------------------------------------------------------------------------------
+DEFINE METHOD .mniMultiFunctionOnlySingle(!compare IS STRING, !function IS STRING, !type IS STRING, !name IS STRING, !Sval IS STRING)
+
+VAR !user USERMOD 
+var !clock CLOCK
+!clockDay = !clock.STRING().BEFORE(' ')
+!clockMonth = !clock.STRING().AFTER(' ').BEFORE(' ')
+!clockYear = !clock.STRING().AFTER(' ').AFTER(' ').BEFORE(' ')
+ 
+!STADEFvalue = !THIS.mniStadef(!type)
+ 
+IF (!Sval $!compare 'unset') THEN  
+ STM $!function $!STADEFvalue '$!user : $!clockDay/$!clockMonth/$!clockYear'
+ Handle(123,9)
+ endhandle
+ENDIF
+
+ENDMETHOD
+
+-------------------------------------------------------------------------------------
+-- METHOD: mniCheckStatus
+-- Func:   For each added element in the list it will check its status
+-- Feed:   elemType (STRU / EQUI / SUPP / FRMW / PIPE / VALVE / INST / PCOM / FILT)
+--         elemName (!!CE.NAME)
+-- Return: ARRAY -> row [elemType, elemName, Sval, Sdsc, Snum, Scom]
+-------------------------------------------------------------------------------------
+DEFINE METHOD .mniCheckStatus(!elemType IS STRING, !elemName IS STRING) IS ARRAY
+
+!row  = ARRAY()
+
+!SCvalue = !THIS.mniStadef(!elemType)
+
+$* Assigning SC
+VAR !Sval STVVAL( !SCvalue )
+IF (!Sval EQ '=0/0') THEN
+ !Sval = 'unset'
+ENDIF
+
+VAR !Sdsc STVDSC( !SCvalue )
+Handle(123,12)
+ !Sdsc = 'unset'
+endhandle
+
+VAR !Snum STVNUM( !SCvalue )
+Handle(123,12)
+ !Snum = 'unset'
+endhandle
+
+VAR !Scom STVCOM( !SCvalue )
+Handle(123,12)
+ !Scom = 'unset'
+endhandle
+
+
+!singleRow[1] = !elemType
+!singleRow[2] = !elemName
+!singleRow[3] = !Sval
+!singleRow[4] = !Sdsc
+!singleRow[5] = !Snum
+!singleRow[6] = !Scom
+
+!row.append(!singleRow)
+RETURN !row
+
+ENDMETHOD
+
+-------------------------------------------------------------------------------------
+-- METHOD: mniStadef
+-- Func:   Returns the "SCvalue" based on the type of selected element
+-- Feed:   elemType (!!CE.TYPE)
+-- Return: DBREF -> SCvalue ( SidemStatues_DesignStruSI2000
+--                            SidemStatues_DesignEquipment 
+--                            SidemStatues_DesignSupport
+--                            SidemStatues_DesignPiping
+--                            SidemStatues_DesignPipingComponents )
+-------------------------------------------------------------------------------------
+DEFINE METHOD .mniStadef(!elemType IS STRING) IS DBREF
+
+$* Definig type of SC
+IF (!elemType EQ 'STRU') THEN
+ !SCvalue = /SidemStatues_DesignStruSI2000
+ 
+ELSEIF (!elemType EQ 'EQUI') THEN
+ !SCvalue = /SidemStatues_DesignEquipment
+ 
+ELSEIF (!elemType EQ 'SUPP' OR !elemType EQ 'FRMW') THEN
+ !SCvalue = /SidemStatues_DesignSupport
+ 
+ELSEIF (!elemType EQ 'PIPE') THEN
+ !SCvalue = /SidemStatues_DesignPiping
+ 
+ELSE
+ !SCvalue = /SidemStatues_DesignPipingComponents
+
+ENDIF
+
+RETURN !SCvalue
+
+ENDMETHOD

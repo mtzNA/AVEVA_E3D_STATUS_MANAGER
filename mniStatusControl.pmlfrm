@@ -1,0 +1,452 @@
+------------------------------------------------------------------------------------- 
+-- File:         mniStatusControl.pmlfrm
+-- Module:       Design
+-- Author:       morteza.naeini@veolia.com - naeini.morteza@gmail.com
+-- Created:      09/07/2025
+-- Description:  Managing status control
+-------------------------------------------------------------------------------------
+-- METHOD list:  01. initialise
+--               02. mniPropagate
+--               03. mniMultiFunction
+--               04. mniAddedElements
+--               05. mniSingAll
+--               06. mniAddElem
+--               07. mniCheckStatus
+--               08. mniStadef
+--               09. mniremCE
+--               10. mniremAll
+-------------------------------------------------------------------------------------
+-- Func list:    01.
+-------------------------------------------------------------------------------------
+-- Global Var:   01. listOfElements -> (ARRAY): List of elements
+--               02. singAllVal -> (BOOL): Color of the buttons
+--               03. SelectedElementName -> (STR): Name to send to other form
+--               04. SelectedElementType -> (STR): Type to send to other form
+--               05. propagationCandidateCol -> (ARRAY): Founded candidates
+-------------------------------------------------------------------------------------
+-- Member(att):  01.
+-------------------------------------------------------------------------------------
+SETUP form !!mniStatusControl 
+
+PATH DOWN
+FRAME      .f0         ||
+
+ BUTTON    .addElem           'Add Zone elements'     WIDTH 7  HEIGHT 2
+ BUTTON    .remsel            'Rem selected'          WIDTH 7  HEIGHT 2
+ BUTTON    .remAll            'Rem all'               WIDTH 7  HEIGHT 1
+EXIT
+FRAME      .f1      AT YMAX.f0-0.1  ||
+ BUTTON    .singAll     ''             WIDTH 7  HEIGHT 1
+ BUTTON    .assign      'Assign'       WIDTH 7  HEIGHT 1
+ BUTTON    .promote     'Promote'      WIDTH 7  HEIGHT 1
+ BUTTON    .demote      'Demote'       WIDTH 7  HEIGHT 1
+ BUTTON    .reset       'Reset'        WIDTH 7  HEIGHT 1
+ BUTTON    .remove      'Remove'       WIDTH 7  HEIGHT 1
+ BUTTON    .propagate   'Propagate'    WIDTH 7  HEIGHT 1
+EXIT
+
+LIST .addedElements || AT YMIN.f0+0.3 AT XMAX.addElem+1  SINGLE  WIDTH 100 HEIGHT 22
+
+EXIT
+
+-------------------------------------------------------------------------------------
+-- METHOD: initialise
+-- Func:   Initialises the "mniStatusControl" form
+-- Feed:   0
+-- Return: 0
+-------------------------------------------------------------------------------------
+DEFINE METHOD .mniStatusControl()
+ 
+!THIS.FORMTITLE = 'Status control tool'
+
+!THIS.addElem.CALLBACK        = '!THIS.mniAddElem()'
+!THIS.remsel.CALLBACK         = '!THIS.mniremCE()'
+!THIS.remAll.CALLBACK         = '!THIS.mniremAll()' 
+
+!THIS.singAll.CALLBACK        = '!THIS.mniSingAll()' 
+
+!THIS.assign.CALLBACK         = |!THIS.mniMultiFunction('EQ', 'ASSIGN')|
+!THIS.promote.CALLBACK        = |!THIS.mniMultiFunction('NE', 'PROMOTE')|
+!THIS.demote.CALLBACK         = |!THIS.mniMultiFunction('NE', 'DEMOTE')|
+!THIS.reset.CALLBACK          = |!THIS.mniMultiFunction('NE', 'RESET')|
+!THIS.remove.CALLBACK         = |!THIS.mniMultiFunction('NE', 'REMOVE')|
+!THIS.propagate.CALLBACK      = |!THIS.mniPropagate()|
+
+!THIS.addedElements.CALLBACK  = '!THIS.mniAddedElements()' 
+
+!THIS.singAll.TAG = 'Single'
+!!singAllVal = TRUE
+
+!THIS.singAll.Background   = 'YELLOW'
+!THIS.assign.Background    = 'YELLOW'
+!THIS.promote.Background   = 'YELLOW'
+!THIS.demote.Background    = 'YELLOW'
+!THIS.reset.Background     = 'YELLOW'
+!THIS.remove.Background    = 'YELLOW'
+!THIS.propagate.Background = 'YELLOW'
+
+!heading[1]     = 'Type'
+!heading[2]     = 'Name'
+!heading[3]     = 'S.Value'
+!heading[4]     = 'S.Description'
+!heading[5]     = 'S.Number'
+!heading[6]     = 'User - Date'
+!this.addedElements.setheadings(!heading)
+
+ENDMETHOD
+
+-------------------------------------------------------------------------------------
+-- METHOD:  mniPropagate 
+-- Func:    Prepare propagation of status of the (Single / all) element to every other 
+--          Element with same type and corresponding name
+-- Feed:    0
+-- Reading: 0
+-------------------------------------------------------------------------------------
+DEFINE METHOD .mniPropagate()
+
+$* These will be used to fill the first list in other form
+ !!SelectedElementName = !THIS.addedElements.selection().SPLIT()[2]
+ !!SelectedElementType = !THIS.addedElements.selection().SPLIT()[1]
+
+IF (!THIS.singAll.TAG EQ 'Single') THEN  $* -> "Single" 
+
+$* Getting DBnum of the selected element
+ !nameOrig    = !THIS.addedElements.selection().SPLIT()[2]
+ $!nameOrig
+ !selectedDbnum = !!CE.REFNO
+
+$* Generating the name that we need to look for
+ !nameAfter   = !THIS.addedElements.selection().SPLIT()[2].AFTER('-')
+ !nameFirPart = !THIS.addedElements.selection().SPLIT()[2].BEFORE('-').SUBSTRING(2, 2)
+ !nameSecPart = !THIS.addedElements.selection().SPLIT()[2].BEFORE('-').SUBSTRING(7, 2)
+ !nameBefor   = !THIS.addedElements.selection().SPLIT()[2].BEFORE('-').REPLACE(!nameFirPart, '*').REPLACE(!nameSecPart, '*')
+ !searchName = !nameBefor + '-' + !nameAfter
+ 
+$* This will be used to fill the second list in other form
+ var !!propagationCandidateCol collect all $!!SelectedElementType with (matchwild (NAME, !searchName)) for WORLD
+ !index = !!propagationCandidateCol.FINDFIRST('$!selectedDbnum')
+ !!propagationCandidateCol.REMOVE(!index)
+ 
+ENDIF
+
+$* Running the second form (re-initializing it)
+ pml reload form !!mniStatusControlPropagate
+ show !!mniStatusControlPropagate
+
+ENDMETHOD
+
+-------------------------------------------------------------------------------------
+-- METHOD:   mniMultiFunction
+-- func:     Assigns different type of status control on (single/all) elements
+-- Feed:     compare(EQ / NE) - function(ASSIGN / PROMOTE / DEMOTE / RESET / REMOVE)
+-- Return:   0
+-------------------------------------------------------------------------------------
+DEFINE METHOD .mniMultiFunction(!compare IS STRING, !function IS STRING)
+
+VAR !user USERMOD 
+var !clock CLOCK
+!clockDay = !clock.STRING().BEFORE(' ')
+!clockMonth = !clock.STRING().AFTER(' ').BEFORE(' ')
+!clockYear = !clock.STRING().AFTER(' ').AFTER(' ').BEFORE(' ')
+
+!rows = ARRAY()
+
+IF (!THIS.singAll.TAG EQ 'Single') THEN  $* -> "Single" 
+ !type = !THIS.addedElements.selection().SPLIT()[1]
+ !name = !THIS.addedElements.selection().SPLIT()[2]
+ !Sval = !THIS.addedElements.selection().SPLIT()[3]
+ 
+ !STADEFvalue = !THIS.mniStadef(!type)
+ 
+ IF (!Sval $!compare 'unset') THEN  
+  STM $!function $!STADEFvalue '$!user : $!clockDay/$!clockMonth/$!clockYear'
+  Handle(123,9)
+  endhandle
+  
+  DO !element VALUES !!listOfElements
+   $!element
+   !rows.APPENDARRAY(!THIS.mniCheckStatus(!!CE.TYPE, !!CE.name))
+  ENDDO 
+  !this.addedElements.setrows(!rows)
+ ENDIF
+
+ 
+ELSE  $* -> "ALL"
+ !answer = !!alert.CONFIRM('Are you sure you want to change ALL')
+ IF (!answer EQ 'YES') THEN
+  DO !element VALUES !!listOfElements
+   $!element
+   !type = !THIS.mniCheckStatus(!!CE.TYPE, !!CE.name)[1][1]
+   !Sval = !THIS.mniCheckStatus(!!CE.TYPE, !!CE.name)[1][3]
+   
+   !STADEFvalue = !THIS.mniStadef(!type)
+ 
+   IF (!Sval $!compare 'unset') THEN 
+    STM $!function $!STADEFvalue '$!user : $!clockDay/$!clockMonth/$!clockYear'
+    Handle(123,9)
+    endhandle
+   ENDIF
+  ENDDO 
+ 
+  DO !element VALUES !!listOfElements
+   $!element
+   !rows.APPENDARRAY(!THIS.mniCheckStatus(!!CE.TYPE, !!CE.name))
+  ENDDO 
+  !this.addedElements.setrows(!rows)
+ ENDIF
+ENDIF
+ENDMETHOD
+
+-------------------------------------------------------------------------------------
+-- METHOD: mniAddedElements
+-- Func:   When select an element in the LIST It will choose it in 
+--         tree and put axe on it
+-- Feed:   0
+-- Return: 0
+-------------------------------------------------------------------------------------
+DEFINE METHOD .mniAddedElements()
+
+!type = !THIS.addedElements.selection().SPLIT()[1]
+!name = !THIS.addedElements.selection().SPLIT()[2]
+!Sval = !THIS.addedElements.selection().SPLIT()[3]
+!Sdes = !THIS.addedElements.selection().SPLIT()[4]
+!Snum = !THIS.addedElements.selection().SPLIT()[5]
+!Scom = !THIS.addedElements.selection().SPLIT()[6]
+
+$!name
+AXE AT CE
+ENDMETHOD
+
+-------------------------------------------------------------------------------------
+-- METHOD: mniSingAll
+-- Func:   Switches between (Single / all) mode
+-- Feed:   0
+-- Return: 0
+-------------------------------------------------------------------------------------
+DEFINE METHOD .mniSingAll()
+
+IF (!!singAllVal EQ TRUE) THEN
+ !THIS.singAll.TAG = 'All'
+ 
+ !THIS.singAll.Background   = 'GREEN'
+ !THIS.assign.Background    = 'GREEN'
+ !THIS.promote.Background   = 'GREEN'
+ !THIS.demote.Background    = 'GREEN'
+ !THIS.reset.Background     = 'GREEN'
+ !THIS.remove.Background    = 'GREEN'
+ !THIS.propagate.Background = 'GREEN'
+ 
+ !!singAllVal = FALSE
+ 
+ELSEIF (!!singAllVal EQ FALSE) THEN
+ !THIS.singAll.TAG = 'Single'
+ 
+ !THIS.singAll.Background   = 'YELLOW'
+ !THIS.assign.Background    = 'YELLOW'
+ !THIS.promote.Background   = 'YELLOW'
+ !THIS.demote.Background    = 'YELLOW'
+ !THIS.reset.Background     = 'YELLOW'
+ !THIS.remove.Background    = 'YELLOW'
+ !THIS.propagate.Background = 'YELLOW'
+ 
+ !!singAllVal = TRUE
+ENDIF
+ENDMETHOD
+
+-------------------------------------------------------------------------------------
+-- METHOD: mniAddElem
+-- Func:   Add all element inside the zone based on the purpos of the zone
+-- Feed:   0
+-- Return: 0
+-------------------------------------------------------------------------------------
+DEFINE METHOD .mniAddElem()
+
+PROMPT OFF
+PROMPT LOAD ESCAPE 'Select an element from zone or CE inside the ZONE'
+
+ID@
+Handle(61,528)
+ENDHANDLE
+
+Zone
+!zonePurp = !!CE.PURP
+
+$* Defining some common variables
+!rows = ARRAY()
+!elements = ARRAY()
+
+$* Extracting elements from the zone -> using: "purp"
+IF (!zonePurp EQ 'STRU') THEN 
+ !elemCol = object collection()
+ !elemCol.addtype('STRU')
+ !elemCol.scope(ZONE)
+ !elements.APPENDARRAY(!elemCol.results())
+ 
+ !zonePurpDefined = TRUE
+
+ELSEIF (!zonePurp EQ 'MECH' OR !zonePurp EQ 'EQUI') THEN
+ !elemCol = object collection()
+ !elemCol.addtype('EQUI')
+ !elemCol.scope(ZONE)
+ !elements.APPENDARRAY(!elemCol.results())
+ 
+ !zonePurpDefined = TRUE
+ 
+ELSEIF (!zonePurp EQ 'SUPP') THEN
+ !components = ARRAY()
+ !compTypes[1] = 'SUPP'
+ !compTypes[2] = 'FRMW'
+ 
+ !elemCol = object collection()
+ !elemCol.APPENDTYPES(!compTypes)
+ !elemCol.scope(ZONE)
+ !elements.APPENDARRAY(!elemCol.results())
+ 
+ !zonePurpDefined = TRUE
+ 
+ELSEIF (!zonePurp EQ 'PIPE') THEN
+ !components = ARRAY()
+ !compTypes[1] = 'VALVE'
+ !compTypes[2] = 'INST'
+ !compTypes[3] = 'PCOM'
+ !compTypes[4] = 'FILT'
+ !compTypes[5] = 'PIPE'
+
+ 
+ !elemCol = object collection()
+ !elemCol.APPENDTYPES(!compTypes)
+ !elemCol.scope(ZONE)
+ !elements.APPENDARRAY(!elemCol.results())
+ 
+ !zonePurpDefined = TRUE
+ 
+ELSE
+ !!alert.message('Please define purpos of the zone!')
+ !zonePurpDefined = FALSE
+
+ENDIF
+
+$* Reading elements data
+!!listOfElements = !elements
+IF (!zonePurpDefined) THEN
+ DO !element VALUES !elements
+  $!element
+  !rows.APPENDARRAY(!THIS.mniCheckStatus(!!CE.TYPE, !!CE.name))
+ ENDDO 
+ENDIF
+
+!this.addedElements.setrows(!rows)
+ZONE
+
+ENDMETHOD
+
+-------------------------------------------------------------------------------------
+-- METHOD: mniCheckStatus
+-- Func:   For each added element in the list it will check its status
+-- Feed:   elemType (STRU / EQUI / SUPP / FRMW / PIPE / VALVE / INST / PCOM / FILT)
+--         elemName (!!CE.NAME)
+-- Return: ARRAY -> row [elemType, elemName, Sval, Sdsc, Snum, Scom]
+-------------------------------------------------------------------------------------
+DEFINE METHOD .mniCheckStatus(!elemType IS STRING, !elemName IS STRING) IS ARRAY
+
+!row  = ARRAY()
+
+!SCvalue = !THIS.mniStadef(!elemType)
+
+$* Assigning SC
+VAR !Sval STVVAL( !SCvalue )
+IF (!Sval EQ '=0/0') THEN
+ !Sval = 'unset'
+ENDIF
+
+VAR !Sdsc STVDSC( !SCvalue )
+Handle(123,12)
+ !Sdsc = 'unset'
+endhandle
+
+VAR !Snum STVNUM( !SCvalue )
+Handle(123,12)
+ !Snum = 'unset'
+endhandle
+
+VAR !Scom STVCOM( !SCvalue )
+Handle(123,12)
+ !Scom = 'unset'
+endhandle
+
+
+!singleRow[1] = !elemType
+!singleRow[2] = !elemName
+!singleRow[3] = !Sval
+!singleRow[4] = !Sdsc
+!singleRow[5] = !Snum
+!singleRow[6] = !Scom
+
+!row.append(!singleRow)
+RETURN !row
+
+ENDMETHOD
+
+-------------------------------------------------------------------------------------
+-- METHOD: mniStadef
+-- Func:   Returns the "SCvalue" based on the type of selected element
+-- Feed:   elemType (!!CE.TYPE)
+-- Return: DBREF -> SCvalue ( SidemStatues_DesignStruSI2000
+--                            SidemStatues_DesignEquipment 
+--                            SidemStatues_DesignSupport
+--                            SidemStatues_DesignPiping
+--                            SidemStatues_DesignPipingComponents )
+-------------------------------------------------------------------------------------
+DEFINE METHOD .mniStadef(!elemType IS STRING) IS DBREF
+
+$* Definig type of SC
+IF (!elemType EQ 'STRU') THEN
+ !SCvalue = /SidemStatues_DesignStruSI2000
+ 
+ELSEIF (!elemType EQ 'EQUI') THEN
+ !SCvalue = /SidemStatues_DesignEquipment
+ 
+ELSEIF (!elemType EQ 'SUPP' OR !elemType EQ 'FRMW') THEN
+ !SCvalue = /SidemStatues_DesignSupport
+ 
+ELSEIF (!elemType EQ 'PIPE') THEN
+ !SCvalue = /SidemStatues_DesignPiping
+ 
+ELSE
+ !SCvalue = /SidemStatues_DesignPipingComponents
+
+ENDIF
+
+RETURN !SCvalue
+
+ENDMETHOD
+
+-------------------------------------------------------------------------------------
+-- METHOD: mniremCE
+-- Func:   Remove selected element from the list
+-- Feed:   0
+-- Return: 0
+-------------------------------------------------------------------------------------
+DEFINE METHOD .mniremCE()
+
+ !INDEX  = !THIS.addedElements.VAL
+ !elementsInList = !THIS.addedElements.DTEXT
+ 
+ !elementsInList[!INDEX].DELETE()
+ !!listOfElements.remove(!INDEX)
+ Handle (2,752)
+ --!!alert.message('No elements left....!!')
+ endhandle
+ !THIS.addedElements.DTEXT = !elementsInList
+ENDMETHOD
+
+-------------------------------------------------------------------------------------
+-- METHOD: mniremAll
+-- Func:   Remove all elements from the list 
+-- Feed:   0
+-- Return: 0
+-------------------------------------------------------------------------------------
+DEFINE METHOD .mniremAll()
+ !THIS.addedElements.CLEAR()
+ !!listOfElements.DELETE()
+ENDMETHOD

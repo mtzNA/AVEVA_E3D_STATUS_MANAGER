@@ -107,7 +107,8 @@ DEFINE METHOD .mniPropagate()
  !!SelectedElementName = !THIS.addedElements.selection().SPLIT()[2]
  !!SelectedElementType = !THIS.addedElements.selection().SPLIT()[1]
 
- IF (!THIS.singAll.TAG EQ 'Single') THEN  $* -> "Single" 
+ $* Propagating for the "SINGLE" case
+ IF (!THIS.singAll.TAG EQ 'Single') THEN
 
   $* Getting DBnum of the selected element
   !nameOrig    = !THIS.addedElements.selection().SPLIT()[2]

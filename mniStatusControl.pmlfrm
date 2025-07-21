@@ -122,77 +122,48 @@ DEFINE METHOD .mniPropagate()
 
  $* If "single" mod is selected
   IF (!!singAllVal eq TRUE) THEN
+   !thiselemID = !THIS.addedElements.VAL
+   !allElements[1] = !THIS.addedElements.RTEXT[!thiselemID]
 
-    $* If the selected elem has MIN STATUS or plus button will work
-      IF (!THIS.addedElements.selection().SPLIT()[3] NE 'unset') THEN
+ $* If "All" mode is selected
+  ELSE
+   !allElements = !THIS.addedElements.RTEXT
+  ENDIF
+
+   $* Looping over selection 
+    DO !elelemnt VALUES !allElements
+     !elemType = !elelemnt.SPLIT()[1]
+     !elemName = !elelemnt.SPLIT()[2]
+     !elemSval = !elelemnt.SPLIT()[3]
+
+     $* If the selected elem has MIN STATUS or plus button will work
+      IF (!elemSval NE 'unset') THEN
       
-      $* These will be used to fill the first list in other form
-        !!SelectedElementName = !THIS.addedElements.selection().SPLIT()[2]
-        !!SelectedElementType = !THIS.addedElements.selection().SPLIT()[1]
-      
-      $* Getting DBnum of the selected element
-        !nameOrig    = !THIS.addedElements.selection().SPLIT()[2]
-        $!nameOrig
+       $* These will be used to fill the first list in other form
+        !!SelectedElementName = !elemName
+        !!SelectedElementType = !elemType
+
+       $* Getting DBnum of the selected element
+        $!elemName
         !selectedDbnum = !!CE.REFNO
-      
-      $* Generating the name that we need to look for
-        !nameAfter   = !THIS.addedElements.selection().SPLIT()[2].AFTER('-')
-        !nameFirPart = !THIS.addedElements.selection().SPLIT()[2].BEFORE('-').SUBSTRING(2, 2)
-        !nameSecPart = !THIS.addedElements.selection().SPLIT()[2].BEFORE('-').SUBSTRING(7, 2)
-        !nameBefor   = !THIS.addedElements.selection().SPLIT()[2].BEFORE('-').REPLACE(!nameFirPart, '*').REPLACE(!nameSecPart, '*')
-        !searchName = !nameBefor + '-' + !nameAfter
-      
-      $* This will be used to fill the second list in other form
-        var !!propagationCandidateCol collect all $!!SelectedElementType with (matchwild (NAME, !searchName)) for WORLD
-        !index = !!propagationCandidateCol.FINDFIRST('$!selectedDbnum')
-        !!propagationCandidateCol.REMOVE(!index)
-        
-      $* Running the second form (re-initializing it)
-        pml reload form !!mniStatusControlPropagate
-        show !!mniStatusControlPropagate
-      ENDIF
-  
-  $* If "All" mode is selected
-   ELSE
-    !allElements = !THIS.addedElements.RTEXT
 
-    $* Looping over selection 
-     DO !elelemnt VALUES !allElements
-      !elemType = !elelemnt.SPLIT()[1]
-      !elemName = !elelemnt.SPLIT()[2]
-      !elemSval = !elelemnt.SPLIT()[3]
-
-      $* If the selected elem has MIN STATUS or plus button will work
-       IF (!elemSval NE 'unset') THEN
-
-        $* These will be used to fill the first list in other form
-         !!SelectedElementName = !elemName
-         !!SelectedElementType = !elemType
-
-        $* Getting DBnum of the selected element
-         $!elemName
-         !selectedDbnum = !!CE.REFNO
-
-        $* Generating the name that we need to look for
+       $* Generating the name that we need to look for
          !nameAfter   = !elemName.AFTER('-')
          !nameFirPart = !elemName.BEFORE('-').SUBSTRING(2, 2)
          !nameSecPart = !elemName.BEFORE('-').SUBSTRING(7, 2)
          !nameBefor   = !elemName.BEFORE('-').REPLACE(!nameFirPart, '*').REPLACE(!nameSecPart, '*')
          !searchName  = !nameBefor + '-' + !nameAfter
 
-        $* This will be used to fill the second list in other form
+       $* This will be used to fill the second list in other form
           var !!propagationCandidateCol collect all $!!SelectedElementType with (matchwild (NAME, !searchName)) for WORLD
           !index = !!propagationCandidateCol.FINDFIRST('$!selectedDbnum')
           !!propagationCandidateCol.REMOVE(!index)
 
-        $* Running the second form (re-initializing it)
+       $* Running the second form (re-initializing it)
           pml reload form !!mniStatusControlPropagate
           show !!mniStatusControlPropagate
-
-        ENDIF
-
-      ENDDO
-   ENDIF
+      ENDIF
+    ENDDO
 ENDMETHOD
 
 -------------------------------------------------------------------------------------

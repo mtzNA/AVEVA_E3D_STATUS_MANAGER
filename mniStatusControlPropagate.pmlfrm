@@ -26,38 +26,38 @@ EXIT
 -------------------------------------------------------------------------------------
 DEFINE METHOD .mniStatusControlPropagate()
  $* Initialising the form itself
- !THIS.FORMTITLE      = 'Status control tool (Propagation)'
- !THIS.apply.CALLBACK = '!THIS.mniApply()'
+    !THIS.FORMTITLE      = 'Status control tool (Propagation)'
+    !THIS.apply.CALLBACK = '!THIS.mniApply()'
 
- !heading[1] = 'Type'
- !heading[2] = 'Name'
- !heading[3] = 'S.Value'
- !heading[4] = 'S.Description'
- !heading[5] = 'S.Number'
- !heading[6] = 'User - Date'
- !this.propagationHead.setheadings(!heading)
- !this.propagationCandidates.setheadings(!heading)
+    !heading[1] = 'Type'
+    !heading[2] = 'Name'
+    !heading[3] = 'S.Value'
+    !heading[4] = 'S.Description'
+    !heading[5] = 'S.Number'
+    !heading[6] = 'User - Date'
+    !this.propagationHead.setheadings(!heading)
+    !this.propagationCandidates.setheadings(!heading)
 
  $* Filling the "propagationHead" based on the selection from "mniStatusControl"
- !this.propagationHead.setrows(!THIS.mniCheckStatus(!!SelectedElementType, !!SelectedElementName))
+    !this.propagationHead.setrows(!THIS.mniCheckStatus(!!SelectedElementType, !!SelectedElementName))
 
  $* Filling the "propagationCandidates" based on the all epyname (same type elements)
- !rows = ARRAY()
- DO !condidate VALUES !!propagationCandidateCol
-  $!condidate
-  
-  !candType = !THIS.mniCheckStatus(!!CE.TYPE, !!CE.name)[1][1]
-  !candName = !THIS.mniCheckStatus(!!CE.TYPE, !!CE.name)[1][2]
-  !candSval = !THIS.mniCheckStatus(!!CE.TYPE, !!CE.name)[1][3]
-  
-  $* If status EQ "unset" -> "INITIALISE" status on the element
-  IF (!candSval EQ 'unset') THEN
-   !THIS.mniMultiFunctionOnlySingle('EQ', 'ASSIGN', !candType, !candName, !candSval)
-  ENDIF
+  !rows = ARRAY()
+  DO !condidate VALUES !!propagationCandidateCol
+   $!condidate
+     
+   !candType = !THIS.mniCheckStatus(!!CE.TYPE, !!CE.name)[1][1]
+   !candName = !THIS.mniCheckStatus(!!CE.TYPE, !!CE.name)[1][2]
+   !candSval = !THIS.mniCheckStatus(!!CE.TYPE, !!CE.name)[1][3]
+    
+   $* If status EQ "unset" -> "INITIALISE" status on the element
+    IF (!candSval EQ 'unset') THEN
+     THIS.mniMultiFunctionOnlySingle('EQ', 'ASSIGN', !candType, !candName, !candSval)
+    ENDIF
 
-  $* Reading data from each candidates 
-  !rows.APPENDARRAY(!THIS.mniCheckStatus(!!CE.TYPE, !!CE.name))
- ENDDO 
+   $* Reading data from each candidates 
+    !rows.APPENDARRAY(!THIS.mniCheckStatus(!!CE.TYPE, !!CE.name))
+  ENDDO 
 
  $* Assigning the "second list" 
  !this.propagationCandidates.setrows(!rows)

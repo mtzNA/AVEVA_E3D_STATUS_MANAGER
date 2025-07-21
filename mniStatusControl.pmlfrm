@@ -130,40 +130,40 @@ DEFINE METHOD .mniPropagate()
    !allElements = !THIS.addedElements.RTEXT
   ENDIF
 
-   $* Looping over selection 
-    DO !elelemnt VALUES !allElements
-     !elemType = !elelemnt.SPLIT()[1]
-     !elemName = !elelemnt.SPLIT()[2]
-     !elemSval = !elelemnt.SPLIT()[3]
+  $* Looping over selection 
+   DO !elelemnt VALUES !allElements
+    !elemType = !elelemnt.SPLIT()[1]
+    !elemName = !elelemnt.SPLIT()[2]
+    !elemSval = !elelemnt.SPLIT()[3]
 
-     $* If the selected elem has MIN STATUS or plus button will work
-      IF (!elemSval NE 'unset') THEN
-      
-       $* These will be used to fill the first list in other form
-        !!SelectedElementName = !elemName
-        !!SelectedElementType = !elemType
+    $* If the selected elem has MIN STATUS or plus button will work
+     IF (!elemSval NE 'unset') THEN
+     
+      $* These will be used to fill the first list in other form
+       !!SelectedElementName = !elemName
+       !!SelectedElementType = !elemType
 
-       $* Getting DBnum of the selected element
-        $!elemName
-        !selectedDbnum = !!CE.REFNO
+      $* Getting DBnum of the selected element
+       $!elemName
+       !selectedDbnum = !!CE.REFNO
 
-       $* Generating the name that we need to look for
-         !nameAfter   = !elemName.AFTER('-')
-         !nameFirPart = !elemName.BEFORE('-').SUBSTRING(2, 2)
-         !nameSecPart = !elemName.BEFORE('-').SUBSTRING(7, 2)
-         !nameBefor   = !elemName.BEFORE('-').REPLACE(!nameFirPart, '*').REPLACE(!nameSecPart, '*')
-         !searchName  = !nameBefor + '-' + !nameAfter
+      $* Generating the name that we need to look for
+       !nameAfter   = !elemName.AFTER('-')
+       !nameFirPart = !elemName.BEFORE('-').SUBSTRING(2, 2)
+       !nameSecPart = !elemName.BEFORE('-').SUBSTRING(7, 2)
+       !nameBefor   = !elemName.BEFORE('-').REPLACE(!nameFirPart, '*').REPLACE(!nameSecPart, '*')
+       !searchName  = !nameBefor + '-' + !nameAfter
 
-       $* This will be used to fill the second list in other form
-          var !!propagationCandidateCol collect all $!!SelectedElementType with (matchwild (NAME, !searchName)) for WORLD
-          !index = !!propagationCandidateCol.FINDFIRST('$!selectedDbnum')
-          !!propagationCandidateCol.REMOVE(!index)
+      $* This will be used to fill the second list in other form
+       var !!propagationCandidateCol collect all $!!SelectedElementType with (matchwild (NAME, !searchName)) for WORLD
+       !index = !!propagationCandidateCol.FINDFIRST('$!selectedDbnum')
+       !!propagationCandidateCol.REMOVE(!index)
 
-       $* Running the second form (re-initializing it)
-          pml reload form !!mniStatusControlPropagate
-          show !!mniStatusControlPropagate
-      ENDIF
-    ENDDO
+      $* Running the second form (re-initializing it)
+       pml reload form !!mniStatusControlPropagate
+       show !!mniStatusControlPropagate
+     ENDIF
+   ENDDO
 ENDMETHOD
 
 -------------------------------------------------------------------------------------

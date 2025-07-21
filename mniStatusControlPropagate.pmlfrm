@@ -15,7 +15,11 @@ layout form !!mniStatusControlPropagate dialog
   LIST .propagationHead       |Selected element|   SINGLE  WIDTH 100 HEIGHT 2
   LIST .propagationCandidates |Selected element epynames| multiple  WIDTH 100 HEIGHT 15
  EXIT
- BUTTON    .apply      'Click 2 Times!'       WIDTH 10  HEIGHT 1
+
+ BUTTON    .previous   'Previous'       WIDTH 10  HEIGHT 1
+ PATH RIGHT
+ BUTTON    .next       'Next'       WIDTH 10  HEIGHT 1
+ BUTTON    .apply      'Apply'       WIDTH 10  HEIGHT 1
 EXIT
 
 -------------------------------------------------------------------------------------
@@ -52,7 +56,7 @@ DEFINE METHOD .mniStatusControlPropagate()
     
    $* If status EQ "unset" -> "INITIALISE" status on the element
     IF (!candSval EQ 'unset') THEN
-     THIS.mniMultiFunctionOnlySingle('EQ', 'ASSIGN', !candType, !candName, !candSval)
+     !THIS.mniMultiFunctionOnlySingle('EQ', 'ASSIGN', !candType, !candName, !candSval)
     ENDIF
 
    $* Reading data from each candidates 

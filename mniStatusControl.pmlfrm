@@ -23,7 +23,6 @@
 --               03. SelectedElementName -> (STR): Name to send to other form
 --               04. SelectedElementType -> (STR): Type to send to other form
 --               05. propagationCandidateCol -> (ARRAY): Founded candidates
---               06. allElements -> (ARRAY): Array of (1 / several) elements in list
 -------------------------------------------------------------------------------------
 -- Member(att):  01.
 -------------------------------------------------------------------------------------
@@ -124,15 +123,15 @@ DEFINE METHOD .mniPropagate()
  $* If "single" mod is selected
   IF (!!singAllVal eq TRUE) THEN
    !thiselemID = !THIS.addedElements.VAL
-   !!allElements[1] = !THIS.addedElements.RTEXT[!thiselemID]
+   !allElements[1] = !THIS.addedElements.RTEXT[!thiselemID]
 
  $* If "All" mode is selected
   ELSE
-   !!allElements = !THIS.addedElements.RTEXT
+   !allElements = !THIS.addedElements.RTEXT
   ENDIF
 
    $* Looping over selection 
-    DO !elelemnt VALUES !!allElements
+    DO !elelemnt VALUES !allElements
      !elemType = !elelemnt.SPLIT()[1]
      !elemName = !elelemnt.SPLIT()[2]
      !elemSval = !elelemnt.SPLIT()[3]

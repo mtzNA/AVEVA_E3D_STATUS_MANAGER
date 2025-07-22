@@ -35,8 +35,9 @@ DEFINE METHOD .mniStatusControlPropagate()
   !THIS.FORMTITLE      = 'Status control tool (Propagation)'
   
   $* Initiating functions
-   !THIS.apply.CALLBACK = '!THIS.mniApply()'
-   !THIS.next.CALLBACK  = '!THIS.mniNext()'
+   !THIS.apply.CALLBACK     = '!THIS.mniApply()'
+   !THIS.next.CALLBACK      = '!THIS.mniNext(1)'
+   !THIS.previous.CALLBACK  = '!THIS.mniNext(-1)'
 
   $* Initiating the list
    !heading[1] = 'Type'
@@ -59,7 +60,7 @@ ENDMETHOD
 -- Feed:     index (1 / 2 / ...)
 -- Return:   0
 -------------------------------------------------------------------------------------
-DEFINE METHOD .mniNext()
+DEFINE METHOD .mniNext(!direction IS REAL)
 
  $* Reading (propagationHead) to find index in (localArrayOfSelection)
   !assignedHead = !THIS.propagationHead.RTEXT
@@ -69,16 +70,15 @@ DEFINE METHOD .mniNext()
    
    ELSE
     !assignedHeadElem = !THIS.propagationHead.RTEXT[1]
-
     !loopInitIndex = !!localArrayOfSelection.FINDFIRST('$!assignedHeadElem')
+    !loopInitIndex = !loopInitIndex + !direction
 
-     IF (!loopInitIndex LT !!localArrayOfSelection.SIZE()) THEN
-      !loopInitIndex = !loopInitIndex + 1
-     ELSE
+     IF (!loopInitIndex GT !!localArrayOfSelection.SIZE()) THEN
       !loopInitIndex = 1
+     ELSEIF (!loopInitIndex EQ 0) THEN
+      !loopInitIndex = !!localArrayOfSelection.SIZE()
      ENDIF
    ENDIF
-  
  
  $* Looping in the (localArrayOfSelection) to find (Sval NE 'unset')
   DO !i FROM !loopInitIndex TO !!localArrayOfSelection.SIZE()

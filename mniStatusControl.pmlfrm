@@ -22,7 +22,6 @@
 --               02. singAllVal -> (BOOL): Color of the buttons
 --               03. selectedElements -> (ARRAY): Rtext of the list for element with
 --                                                Svale NE 'unset'
---               04. propagationCandidateCol -> (ARRAY): Founded candidates
 -------------------------------------------------------------------------------------
 -- Member(att):  01.
 -------------------------------------------------------------------------------------
@@ -131,6 +130,7 @@ DEFINE METHOD .mniPropagate()
   ENDIF
 
   $* Looping over selection 
+   !!selectedElements = ARRAY()
    !k = 1
    DO !elelemnt VALUES !allElements
     !elemType = !elelemnt.SPLIT()[1]
@@ -141,37 +141,14 @@ DEFINE METHOD .mniPropagate()
      IF (!elemSval NE 'unset') THEN
       !!selectedElements[!k] = !elelemnt
       !k = !k + 1
-
-     $(
-      $* These will be used to fill the first list in other form
-       !!SelectedElementName = !elemName
-       !!SelectedElementType = !elemType
-
-      $* Getting DBnum of the selected element
-       $!elemName
-       !selectedDbnum = !!CE.REFNO
-
-      $* Generating the name that we need to look for
-       !nameAfter   = !elemName.AFTER('-')
-       !nameFirPart = !elemName.BEFORE('-').SUBSTRING(2, 2)
-       !nameSecPart = !elemName.BEFORE('-').SUBSTRING(7, 2)
-       !nameBefor   = !elemName.BEFORE('-').REPLACE(!nameFirPart, '*').REPLACE(!nameSecPart, '*')
-       !searchName  = !nameBefor + '-' + !nameAfter
-
-      $* This will be used to fill the second list in other form
-       var !!propagationCandidateCol collect all $!!SelectedElementType with (matchwild (NAME, !searchName)) for WORLD
-       !index = !!propagationCandidateCol.FINDFIRST('$!selectedDbnum')
-       !!propagationCandidateCol.REMOVE(!index)
-     $)
-
-     $(
-      $* Running the second form (re-initializing it)
-       pml reload form !!mniStatusControlPropagate
-       show !!mniStatusControlPropagate
-     $)
      ENDIF
    ENDDO
-   q var !!selectedElements
+  
+
+ $* Running the second form (re-initializing it)
+  pml reload form !!mniStatusControlPropagate
+  show !!mniStatusControlPropagate
+
 ENDMETHOD
 
 -------------------------------------------------------------------------------------

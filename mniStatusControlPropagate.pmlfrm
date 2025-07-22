@@ -18,10 +18,11 @@ layout form !!mniStatusControlPropagate dialog
   LIST .propagationCandidates |Selected element epynames| multiple  WIDTH 100 HEIGHT 15
  EXIT
 
- BUTTON    .previous   'Previous'       WIDTH 10  HEIGHT 1
+ BUTTON    .previous   'Previous'  WIDTH 10  HEIGHT 1
  PATH RIGHT
- BUTTON    .next       'Next'       WIDTH 10  HEIGHT 1
- BUTTON    .apply      'Apply'       WIDTH 10  HEIGHT 1
+ BUTTON    .next       'Next'      WIDTH 10  HEIGHT 1
+ BUTTON    .apply      'Apply'     WIDTH 10  HEIGHT 1
+ BUTTON    .reset      'Reset'     WIDTH 10  HEIGHT 1
 EXIT
 
 -------------------------------------------------------------------------------------
@@ -35,9 +36,10 @@ DEFINE METHOD .mniStatusControlPropagate()
   !THIS.FORMTITLE      = 'Status control tool (Propagation)'
   
   $* Initiating functions
-   !THIS.apply.CALLBACK     = '!THIS.mniApply()'
+   !THIS.apply.CALLBACK     = '!THIS.mniApply('PROMOTE')'
    !THIS.next.CALLBACK      = '!THIS.mniNext(1)'
    !THIS.previous.CALLBACK  = '!THIS.mniNext(-1)'
+   !THIS.reset.CALLBACK     = '!THIS.mniApply('RESET')'
 
   $* Initiating the list
    !heading[1] = 'Type'
@@ -135,7 +137,7 @@ ENDMETHOD
 -- Feed:     Automatically from the "second list"
 -- Return:   0
 -------------------------------------------------------------------------------------
-DEFINE METHOD .mniApply()
+DEFINE METHOD .mniApply(!functionality IS STRING)
 
  $* function only works when (propagationHead) is set
   !assignedHead = !THIS.propagationHead.RTEXT
@@ -164,7 +166,7 @@ DEFINE METHOD .mniApply()
      Do !i from 1 TO 10
       !selectedCandStatus = !THIS.mniCheckStatus(!!CE.TYPE, !!CE.name)[1][3]
       IF (!selectedCandStatus NE !targetStatus) THEN
-       !THIS.mniMultiFunctionOnlySingle('NE', 'PROMOTE', !candType, !candName, !candSval)
+       !THIS.mniMultiFunctionOnlySingle('NE', !functionality, !candType, !candName, !candSval)
       ENDIF
      ENDDO
    ENDDO

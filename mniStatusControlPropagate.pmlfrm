@@ -36,10 +36,10 @@ DEFINE METHOD .mniStatusControlPropagate()
   !THIS.FORMTITLE      = 'Status control tool (Propagation)'
   
   $* Initiating functions
-   !THIS.apply.CALLBACK     = '!THIS.mniApply('PROMOTE')'
+   !THIS.apply.CALLBACK     = |!THIS.mniApply('PROMOTE')|
    !THIS.next.CALLBACK      = '!THIS.mniNext(1)'
    !THIS.previous.CALLBACK  = '!THIS.mniNext(-1)'
-   !THIS.reset.CALLBACK     = '!THIS.mniApply('RESET')'
+   !THIS.reset.CALLBACK     = |!THIS.mniApply('RESET')|
 
   $* Initiating the list
    !heading[1] = 'Type'
@@ -191,7 +191,7 @@ ENDMETHOD
 -------------------------------------------------------------------------------------
 DEFINE METHOD .mniMultiFunctionOnlySingle(!compare IS STRING, !function IS STRING, !type IS STRING, !name IS STRING, !Sval IS STRING)
 
- VAR !user USERMOD 
+ VAR !user USER 
  var !clock CLOCK
  !clockDay = !clock.STRING().BEFORE(' ')
  !clockMonth = !clock.STRING().AFTER(' ').BEFORE(' ')

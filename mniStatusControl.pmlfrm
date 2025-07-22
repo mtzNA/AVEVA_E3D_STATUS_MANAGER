@@ -159,7 +159,7 @@ ENDMETHOD
 -------------------------------------------------------------------------------------
 DEFINE METHOD .mniMultiFunction(!compare IS STRING, !function IS STRING)
 
- VAR !user USERMOD 
+ VAR !user USER 
  var !clock CLOCK
  !clockDay = !clock.STRING().BEFORE(' ')
  !clockMonth = !clock.STRING().AFTER(' ').BEFORE(' ')

@@ -9,7 +9,7 @@
 --
 --
 -------------------------------------------------------------------------------------
--- Global Var:   01. localArrayOfSelection -> (ARRAY): EQ selectedElements
+-- Global Var:   01. !propagationCandidateCol -> (ARRAY): elements in the second list
 -------------------------------------------------------------------------------------
 layout form !!mniStatusControlPropagate dialog
  PATH DOWN
@@ -101,12 +101,12 @@ DEFINE METHOD .mniNext(!direction IS REAL)
       !nameBefor   = !elemName.BEFORE('-').REPLACE(!nameFirPart, '*').REPLACE(!nameSecPart, '*')
       !searchName  = !nameBefor + '-' + !nameAfter
 
-      var !propagationCandidateCol collect all $!elemType with (matchwild (NAME, !searchName)) for WORLD
-      !index = !propagationCandidateCol.FINDFIRST('$!elemDbNu')
-      !propagationCandidateCol.REMOVE(!index)
+      var !!propagationCandidateCol collect all $!elemType with (matchwild (NAME, !searchName)) for WORLD
+      !index = !!propagationCandidateCol.FINDFIRST('$!elemDbNu')
+      !!propagationCandidateCol.REMOVE(!index)
 
       !rows = ARRAY()
-      DO !condidate VALUES !propagationCandidateCol
+      DO !condidate VALUES !!propagationCandidateCol
        $!condidate
        
        !candType = !THIS.mniCheckStatus(!!CE.TYPE, !!CE.name)[1][1]
@@ -137,42 +137,48 @@ ENDMETHOD
 -------------------------------------------------------------------------------------
 DEFINE METHOD .mniApply()
 
- $* Gets the status of the selected element from the first list
- !targetStatus = !THIS.propagationHead.SELECTION().SPLIT()[3]
+ $* function only works when (propagationHead) is set
+  !assignedHead = !THIS.propagationHead.RTEXT
+  IF (!assignedHead.SET()) THEN
 
- $* Generates list of selection from the second list
- !selectedCandidate   = !THIS.propagationCandidates.selection()  $* (x): Is an array
+   $* Gets the status of the selected element from the first list
+    !targetStatus = !THIS.propagationHead.RTEXT[1].SPLIT()[3]
 
- DO !cand VALUES !selectedCandidate
+   $* Generates list of selection from the second list
+    !selectedCandidate   = !THIS.propagationCandidates.selection()
 
-  $* Initialising the Status for each selected candidate
-  !candType = !cand.SPLIT()[1]
-  !candName = !cand.SPLIT()[2]
-  !candSval = !cand.SPLIT()[3]
-  $!candName
- 
-  IF (!candSval EQ 'unset') THEN
-   !THIS.mniMultiFunctionOnlySingle('EQ', 'ASSIGN', !candType, !candName, !candSval)
-  ELSEIF (!candSval NE 'unset') THEN
-   !THIS.mniMultiFunctionOnlySingle('NE', 'RESET', !candType, !candName, !candSval)
-  ENDIF
+   DO !cand VALUES !selectedCandidate
+    $* Initialising the Status for each selected candidate
+     !candType = !cand.SPLIT()[1]
+     !candName = !cand.SPLIT()[2]
+     !candSval = !cand.SPLIT()[3]
+     $!candName
+    
+    IF (!candSval EQ 'unset') THEN
+     !THIS.mniMultiFunctionOnlySingle('EQ', 'ASSIGN', !candType, !candName, !candSval)
+    ELSEIF (!candSval NE 'unset') THEN
+     !THIS.mniMultiFunctionOnlySingle('NE', 'RESET', !candType, !candName, !candSval)
+    ENDIF
+    
+    $* Promoting selected cands to reach target status
+     Do !i from 1 TO 10
+      !selectedCandStatus = !THIS.mniCheckStatus(!!CE.TYPE, !!CE.name)[1][3]
+      IF (!selectedCandStatus NE !targetStatus) THEN
+       !THIS.mniMultiFunctionOnlySingle('NE', 'PROMOTE', !candType, !candName, !candSval)
+      ENDIF
+     ENDDO
+   ENDDO
 
-  $* Promoting selected cands to reach target status
-  Do !i from 1 TO 10
-   !selectedCandStatus = !THIS.mniCheckStatus(!!CE.TYPE, !!CE.name)[1][3]
-   IF (!selectedCandStatus NE !targetStatus) THEN
-    !THIS.mniMultiFunctionOnlySingle('NE', 'PROMOTE', !candType, !candName, !candSval)
-   ENDIF
-  ENDDO
- ENDDO
-
- $* Updating the list
- !rows = ARRAY()
- DO !condidate VALUES !!propagationCandidateCol
-  $!condidate
-  !rows.APPENDARRAY(!THIS.mniCheckStatus(!!CE.TYPE, !!CE.name))
- ENDDO 
- !this.propagationCandidates.setrows(!rows) 
+   $* Updating the list
+    !rows = ARRAY()
+    DO !condidate VALUES !!propagationCandidateCol
+     $!condidate
+     !rows.APPENDARRAY(!THIS.mniCheckStatus(!!CE.TYPE, !!CE.name))
+    ENDDO 
+   
+   $* Assigning the second list
+    !this.propagationCandidates.setrows(!rows)    
+  ENDIF  
 ENDMETHOD
 
 -------------------------------------------------------------------------------------

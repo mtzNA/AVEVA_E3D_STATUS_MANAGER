@@ -60,9 +60,28 @@ ENDMETHOD
 -- Return:   0
 -------------------------------------------------------------------------------------
 DEFINE METHOD .mniNext()
+
+ $* Reading (propagationHead) to find index in (localArrayOfSelection)
+  !assignedHead = !THIS.propagationHead.RTEXT
+   IF (!assignedHead.SET() EQ FALSE) THEN
+    q var !assignedHead
+    !loopInitIndex = 1
+   
+   ELSE
+    !assignedHeadElem = !THIS.propagationHead.RTEXT[1]
+
+    !loopInitIndex = !!localArrayOfSelection.FINDFIRST('$!assignedHeadElem')
+
+     IF (!loopInitIndex LT !!localArrayOfSelection.SIZE()) THEN
+      !loopInitIndex = !loopInitIndex + 1
+     ELSE
+      !loopInitIndex = 1
+     ENDIF
+   ENDIF
+  
  
  $* Looping in the (localArrayOfSelection) to find (Sval NE 'unset')
-  DO !i FROM 1 TO !!localArrayOfSelection.SIZE()
+  DO !i FROM !loopInitIndex TO !!localArrayOfSelection.SIZE()
    
    $* Assigning some variables
     !elemType = !!localArrayOfSelection[!i].SPLIT()[1]
@@ -105,6 +124,7 @@ DEFINE METHOD .mniNext()
 
        !this.propagationCandidates.setrows(!rows)
     ENDIF
+    break
   ENDDO
 
 ENDMETHOD

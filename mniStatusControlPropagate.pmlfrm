@@ -9,7 +9,7 @@
 --
 --
 -------------------------------------------------------------------------------------
--- Global Var:   01. !propagationCandidateCol -> (ARRAY): elements in the second list
+-- Global Var:   01. propagationCandidateCol -> (ARRAY): elements in the second list
 -------------------------------------------------------------------------------------
 layout form !!mniStatusControlPropagate dialog
  PATH DOWN
@@ -67,7 +67,6 @@ DEFINE METHOD .mniNext(!direction IS REAL)
  $* Reading (propagationHead) to find index in (localArrayOfSelection)
   !assignedHead = !THIS.propagationHead.RTEXT
    IF (!assignedHead.SET() EQ FALSE) THEN
-    q var !assignedHead
     !loopInitIndex = 1
    
    ELSE
